@@ -20,16 +20,30 @@ A modular Natural Language Programming Interface that allows users to interact w
 
 ## Current Status
 
-MVP Phase 1 Complete
+### ✅ Completed
+- Natural language command interpretation
+- Provider-agnostic LLM integration
+- JSON command schema
+- Schema validation
+- Path resolution
+- Semantic validation
+- Command preview pipeline
+
+### 🚧 In Progress
+- Execution engine
+- Logging
+- Unit testing
+
+## Current Pipeline
 
 Natural Language
 ↓
-LLM
+LLM Interpreter
 ↓
-JSON
+Schema Validation
 ↓
-Validation
+Path Resolution
 ↓
-Preview
-
-Execution layer is currently under development.
+Semantic Validation
+↓
+Command Preview
