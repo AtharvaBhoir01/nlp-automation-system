@@ -3,9 +3,11 @@
 
 import os  # Used to read environment variables
 
-# Import our two core modules
+# Import our three core modules
 from interpreter.llm_client import GeminiClient, LLMClient
 from schema.command_schema import validate_command_structure
+from resolver.path_resolver import resolve_command_paths
+from validator.validator import validate_command
 
 
 def print_command(command: dict) -> None:
@@ -74,11 +76,22 @@ def run_cli(client: LLMClient) -> None:
             print(f"\n[Validation Error] {error_message}")
             continue
 
-        # STEP 3 — Display the result (no execution yet)
-        print_command(command)
+        # STEP 2.5 — Resolve placeholder paths to real system paths
+        command = resolve_command_paths(command)
 
-        # Remind the user we're not executing anything yet
-        print("[Preview only — execution not implemented yet]\n")
+        # STEP 3 — Semantic validation
+        is_valid, error_message = validate_command(command)
+        if not is_valid:
+            print(f"\n[Validation Error] {error_message}")
+            continue
+
+        # Non-blocking warning — print but continue
+        if error_message:
+            print(f"\n[Warning] {error_message}")
+
+        # STEP 4 — Display
+        print_command(command)
+        print("[Preview only — execution not implemented yet]\n")        
 
 
 def main():

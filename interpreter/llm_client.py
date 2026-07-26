@@ -37,7 +37,8 @@ Rules:
 - confirmation_required is false for create_folder
 - If the instruction is unclear or not a supported action, return:
   {"action": "unknown", "parameters": {}, "confirmation_required": false}
-- Always use Windows-style file paths (backslashes)
+- Always use Windows-style file paths with double backslashes (e.g. C:\\\\Users\\\\Name)
+- Always escape backslashes properly for valid JSON output
 
 Examples:
 User: "move report.pdf from downloads to documents"
@@ -116,7 +117,8 @@ class GeminiClient(LLMClient):
             model="gemini-3.1-flash-lite",       # current stable free-tier model
             contents=user_input,
             config={
-                "system_instruction": SYSTEM_PROMPT
+                "system_instruction": SYSTEM_PROMPT,
+                "response_mime_type": "application/json"
             }
         )
 
