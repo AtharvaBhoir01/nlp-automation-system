@@ -8,6 +8,7 @@ from interpreter.llm_client import GeminiClient, LLMClient
 from schema.command_schema import validate_command_structure
 from resolver.path_resolver import resolve_command_paths
 from validator.validator import validate_command
+from executor.executor import execute_command
 
 
 def print_command(command: dict) -> None:
@@ -89,9 +90,48 @@ def run_cli(client: LLMClient) -> None:
         if error_message:
             print(f"\n[Warning] {error_message}")
 
-        # STEP 4 — Display
+        # STEP 4 — Display preview
         print_command(command)
-        print("[Preview only — execution not implemented yet]\n")        
+
+        # STEP 5 — Confirmation gate
+        if command.get("confirmation_required"):
+            confirm = input("Confirm execution? (yes/no): ").strip().lower()
+            if confirm not in ("yes", "y"):
+                print("Command cancelled.\n")
+                continue
+
+        # STEP 6 — Execute
+        success, status_code = execute_command(command)
+        parameters = command.get("parameters", {})
+
+        if success:
+            # main.py formats the success message using command data
+            if status_code == "MOVE_SUCCESS":
+                print(f"\n[Success] Moved '{parameters.get('source')}'"
+                      f" → '{parameters.get('destination')}'\n")
+
+            elif status_code == "RENAME_SUCCESS":
+                print(f"\n[Success] Renamed '{parameters.get('source')}'"
+                      f" → '{parameters.get('new_name')}'\n")
+
+            elif status_code == "CREATE_SUCCESS":
+                print(f"\n[Success] Created folder"
+                      f" '{parameters.get('folder_name')}'"
+                      f" in '{parameters.get('path')}'\n")
+
+        else:
+            # main.py formats the error message from the status code
+            error_messages = {
+                "PERMISSION_DENIED": "Permission denied — check file access rights",
+                "OS_ERROR":          "OS error — file may be in use by another process",
+                "ALREADY_EXISTS":    "Already exists — no action taken",
+                "UNEXPECTED_ERROR":  "Unexpected error — check system logs",
+                "UNKNOWN_ACTION":    "Unknown action — no executor available"
+            }
+            reason = error_messages.get(status_code, status_code)
+            print(f"\n[Execution Error] {reason}\n")        
+
+                
 
 
 def main():

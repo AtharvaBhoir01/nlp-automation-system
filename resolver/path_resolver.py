@@ -18,25 +18,47 @@ HOME = os.path.expanduser("~")
 def _resolve_common_locations() -> dict:
     """
     Builds the common locations map at runtime.
-    Prefers OneDrive paths when they exist — handles Windows + OneDrive setups.
-    Falls back to standard paths for non-OneDrive systems.
-    This makes the resolver work correctly across different Windows setups.
+    Checks each folder individually — never assumes OneDrive syncs everything.
+    A folder is only redirected to OneDrive if that specific path exists.
+    Falls back to standard Home path otherwise.
+    Works correctly for partial sync, disabled sync, or no OneDrive.
     """
     onedrive = os.path.join(HOME, "OneDrive")
 
-    # If OneDrive exists, prefer those paths — they're the real locations
-    if os.path.isdir(onedrive):
-        base = onedrive
-    else:
-        base = HOME
+    def best_path(*candidates) -> str:
+        """
+        Returns the first candidate path that actually exists.
+        Falls back to the last candidate if none exist.
+        """
+        for candidate in candidates:
+            if os.path.isdir(candidate):
+                return candidate
+        return candidates[-1]  # safe fallback — last option
 
     return {
-        "Desktop":   os.path.join(base, "Desktop"),
-        "Documents": os.path.join(base, "Documents"),
-        "Downloads": os.path.join(HOME, "Downloads"),  # Downloads rarely syncs
-        "Pictures":  os.path.join(base, "Pictures"),
-        "Music":     os.path.join(base, "Music"),
-        "Videos":    os.path.join(base, "Videos"),
+        "Desktop":   best_path(
+                        os.path.join(onedrive, "Desktop"),
+                        os.path.join(HOME, "Desktop")
+                     ),
+        "Documents": best_path(
+                        os.path.join(onedrive, "Documents"),
+                        os.path.join(HOME, "Documents")
+                     ),
+        "Pictures":  best_path(
+                        os.path.join(onedrive, "Pictures"),
+                        os.path.join(HOME, "Pictures")
+                     ),
+        "Downloads": best_path(
+                        os.path.join(HOME, "Downloads")
+                     ),
+        "Music":     best_path(
+                        os.path.join(onedrive, "Music"),
+                        os.path.join(HOME, "Music")
+                     ),
+        "Videos":    best_path(
+                        os.path.join(onedrive, "Videos"),
+                        os.path.join(HOME, "Videos")
+                     ),
     }
 
 # Build the map once at import time — not on every function call
