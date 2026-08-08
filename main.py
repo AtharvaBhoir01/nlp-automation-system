@@ -2,6 +2,7 @@
 # Entry point for the NLP Automation System — handles the CLI input/output loop
 
 import os  # Used to read environment variables
+import logging  # needed for the type hint in run_cli signature
 
 # Import our three core modules
 from interpreter.llm_client import GeminiClient, LLMClient
@@ -9,6 +10,7 @@ from schema.command_schema import validate_command_structure
 from resolver.path_resolver import resolve_command_paths
 from validator.validator import validate_command
 from executor.executor import execute_command
+from logs.logger import get_logger
 
 
 def print_command(command: dict) -> None:
@@ -23,7 +25,7 @@ def print_command(command: dict) -> None:
     print("----------------------")
 
 
-def run_cli(client: LLMClient) -> None:
+def run_cli(client: LLMClient, logger: logging.Logger) -> None:
     """
     The main CLI loop.
     Accepts user input, interprets it, validates it, and displays the result.
@@ -43,6 +45,7 @@ def run_cli(client: LLMClient) -> None:
         # Allow graceful exit
         if user_input.lower() in ("exit", "quit"):
             print("Goodbye.")
+            logger.info("Session ended")
             break
 
         # Skip empty input
@@ -56,6 +59,7 @@ def run_cli(client: LLMClient) -> None:
         except ValueError as e:
             # Gemini returned something we couldn't parse as JSON
             print(f"\n[Interpreter Error] {e}")
+            logger.error(f"interpreter_error | {e}")
             continue    
 
         except Exception as e:
@@ -65,8 +69,10 @@ def run_cli(client: LLMClient) -> None:
             if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
                 print("\n[Service Error] Gemini quota or rate limit reached.")
                 print("Please wait a moment and try again, or check your API quota at https://ai.dev/rate-limit")
+                logger.warning(f"service_error | QUOTA_EXHAUSTED")
             else:
                 print(f"\n[Service Error] Unexpected API error: {e}")
+                logger.error(f"service_error | {e}")
             continue
 
         # STEP 2 — Validate the command structure against our schema
@@ -75,6 +81,7 @@ def run_cli(client: LLMClient) -> None:
         if not is_valid:
             # Command parsed as JSON but doesn't match our schema rules
             print(f"\n[Validation Error] {error_message}")
+            logger.warning(f"schema_validation_failed | {error_message}")
             continue
 
         # STEP 2.5 — Resolve placeholder paths to real system paths
@@ -84,6 +91,7 @@ def run_cli(client: LLMClient) -> None:
         is_valid, error_message = validate_command(command)
         if not is_valid:
             print(f"\n[Validation Error] {error_message}")
+            logger.warning(f"semantic_validation_failed | {error_message}")
             continue
 
         # Non-blocking warning — print but continue
@@ -119,6 +127,8 @@ def run_cli(client: LLMClient) -> None:
                       f" '{parameters.get('folder_name')}'"
                       f" in '{parameters.get('path')}'\n")
 
+            logger.info(f"{command.get('action')} | {status_code}")
+
         else:
             # main.py formats the error message from the status code
             error_messages = {
@@ -129,7 +139,9 @@ def run_cli(client: LLMClient) -> None:
                 "UNKNOWN_ACTION":    "Unknown action — no executor available"
             }
             reason = error_messages.get(status_code, status_code)
-            print(f"\n[Execution Error] {reason}\n")        
+            print(f"\n[Execution Error] {reason}\n")  
+
+            logger.error(f"{command.get('action')} | {status_code}")      
 
                 
 
@@ -147,8 +159,13 @@ def main():
         print(f"\n[Setup Error] {e}")
         return  # exit cleanly — no point continuing without a client
 
+    # Initialise logger — shared across the session
+    logger = get_logger()
+    logger.info("Session started")
+
+
     # Hand off to the CLI loop
-    run_cli(client)
+    run_cli(client, logger)  # pass logger into run_cli
 
 
 # ---------------------------------------------------------------------------
