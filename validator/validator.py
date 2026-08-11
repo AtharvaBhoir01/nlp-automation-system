@@ -2,6 +2,15 @@
 # Semantic validation layer — checks safety and correctness of resolved commands.
 # Runs after schema validation and path resolution.
 # Never executes commands — only judges whether they are safe to execute.
+# ---------------------------------------------------------------------------
+# KNOWN LIMITATION — Semantic Disambiguation (Future Enhancement)
+# The validator confirms a file exists at the resolved path but cannot
+# verify this matches user intent when multiple files share the same name.
+# Example: "move test.txt to documents" succeeds even if test.txt exists
+# in both Desktop and Desktop\subfolder — LLM picks one, user may intend
+# the other.
+# Future fix: filesystem search + disambiguation step before execution.
+# ---------------------------------------------------------------------------
 
 import os
 
