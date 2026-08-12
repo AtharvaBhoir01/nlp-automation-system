@@ -10,6 +10,7 @@
 # in both Desktop and Desktop\subfolder — LLM picks one, user may intend
 # the other.
 # Future fix: filesystem search + disambiguation step before execution.
+# Tracked in: ADR-004 (batch operations will face this at scale)
 # ---------------------------------------------------------------------------
 
 import os
