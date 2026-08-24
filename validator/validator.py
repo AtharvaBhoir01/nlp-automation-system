@@ -177,6 +177,25 @@ def _validate_create_folder(parameters: dict) -> tuple:
 
     return (True, "")
 
+def _validate_organize_folder(parameters: dict) -> tuple:
+    """Validates an organize_folder command's parameters."""
+
+    path = parameters.get("source", "")
+
+    # Safety: directory traversal
+    if _has_directory_traversal(path):
+        return (False, "TRAVERSAL_ATTEMPT: Path contains directory traversal")
+
+    # Safety: dangerous system locations
+    if _is_dangerous_path(path):
+        return (False, "DANGEROUS_PATH: Path targets a protected system directory")
+
+    # OS check: source must exist and be a directory
+    if not os.path.isdir(path):
+        return (False, f"SOURCE_NOT_FOUND: Directory does not exist: {path}")
+
+    return (True, "")
+
 # ---------------------------------------------------------------------------
 # MAIN DISPATCHER
 # Public interface — routes to the correct action-specific validator.
@@ -207,6 +226,9 @@ def validate_command(command: dict) -> tuple:
 
     elif action == "create_folder":
         return _validate_create_folder(parameters)
+
+    elif action == "organize_folder":
+        return _validate_organize_folder(parameters)
 
     else:
         # Should never reach here if schema validation ran first

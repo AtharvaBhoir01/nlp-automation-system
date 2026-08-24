@@ -10,7 +10,8 @@
 ALLOWED_ACTIONS = [
     "move_file",
     "rename_file",
-    "create_folder"
+    "create_folder",
+    "organize_folder"
 ]
 
 
@@ -31,6 +32,10 @@ COMMAND_SCHEMAS = {
     "create_folder": {
         "required_parameters": ["path", "folder_name"],
         "confirmation_required": False
+    },
+    "organize_folder": {
+        "required_parameters": ["source"],
+        "confirmation_required": True
     }
 }
 

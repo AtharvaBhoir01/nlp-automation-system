@@ -12,26 +12,28 @@ import shutil
 # ACTION EXECUTORS
 # ---------------------------------------------------------------------------
 
-def _execute_move_file(parameters: dict) -> tuple:
+def _move_file_raw(source: str, destination: str) -> tuple:
     """
-    Moves a file from source to destination.
-    Returns status code only — no user-facing messages.
+    Raw file move operation — no routing, no dispatch.
+    Shared between single-file executor and batch organizer.
+    Single source of truth for shutil.move() error handling.
     """
-    source = parameters.get("source")
-    destination = parameters.get("destination")
-
     try:
         shutil.move(source, destination)
         return (True, "MOVE_SUCCESS")
-
     except PermissionError:
         return (False, "PERMISSION_DENIED")
-
     except OSError:
         return (False, "OS_ERROR")
-
     except Exception:
         return (False, "UNEXPECTED_ERROR")
+
+
+def _execute_move_file(parameters: dict) -> tuple:
+    """Validates a move_file command's parameters."""
+    source = parameters.get("source")
+    destination = parameters.get("destination")
+    return _move_file_raw(source, destination)  # delegates to shared function
 
 
 def _execute_rename_file(parameters: dict) -> tuple:
