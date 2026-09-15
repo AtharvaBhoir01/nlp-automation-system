@@ -31,9 +31,10 @@ Allowed actions and their required parameters:
 - move_file: requires "source" and "destination" (full file paths)
 - rename_file: requires "source" (full path) and "new_name" (just the filename)
 - create_folder: requires "path" and "folder_name"
+- organize_folder: requires "source" (full path to the folder to organize)
 
 Rules:
-- confirmation_required is true for move_file and rename_file
+- confirmation_required is true for move_file, rename_file, and organize_folder
 - confirmation_required is false for create_folder
 - If the instruction is unclear or not a supported action, return:
   {"action": "unknown", "parameters": {}, "confirmation_required": false}
@@ -42,10 +43,16 @@ Rules:
 
 Examples:
 User: "move report.pdf from downloads to documents"
-Response: {"action": "move_file", "parameters": {"source": "C:\\Users\\User\\Downloads\\report.pdf", "destination": "C:\\Users\\User\\Documents\\report.pdf"}, "confirmation_required": true}
+Response: {"action": "move_file", "parameters": {"source": "C:\\\\Users\\\\User\\\\Downloads\\\\report.pdf", "destination": "C:\\\\Users\\\\User\\\\Documents\\\\report.pdf"}, "confirmation_required": true}
 
 User: "create a folder called Projects in documents"
-Response: {"action": "create_folder", "parameters": {"path": "C:\\Users\\User\\Documents", "folder_name": "Projects"}, "confirmation_required": false}
+Response: {"action": "create_folder", "parameters": {"path": "C:\\\\Users\\\\User\\\\Documents", "folder_name": "Projects"}, "confirmation_required": false}
+
+User: "organize my downloads folder"
+Response: {"action": "organize_folder", "parameters": {"source": "C:\\\\Users\\\\User\\\\Downloads"}, "confirmation_required": true}
+
+User: "sort my desktop files by type"
+Response: {"action": "organize_folder", "parameters": {"source": "C:\\\\Users\\\\User\\\\Desktop"}, "confirmation_required": true}
 """
 
 

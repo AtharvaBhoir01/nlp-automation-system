@@ -1,3 +1,18 @@
+# Architectural Principles
+
+## Batch Safety Invariant
+
+> **Confirmation applies only to what was previewed.**
+
+For batch operations, the system must execute only the exact operation
+plan that was presented to the user and explicitly confirmed.
+
+Any change to the operation plan after confirmation requires the batch
+to be aborted, a fresh plan to be generated, and fresh user confirmation.
+
+This invariant ensures that the confirmation step remains meaningful and
+prevents the system from executing operations that the user did not review.
+
 # Architecture Decision Records
 
 ## ADR-001: Provider-Agnostic LLM Layer
@@ -83,3 +98,18 @@ intent, BatchResult represents outcome.
 inconsistency risk. A plan object that also holds results conflates
 two distinct concepts.
 **Status:** Approved — pending implementation
+
+## ADR-011: System Prompt Is Part of the Architecture
+**Decision:** SYSTEM_PROMPT in llm_client.py must be updated whenever
+a new action is added to ALLOWED_ACTIONS.
+**Reason:** The LLM's only source of truth about valid actions is the
+system prompt. Schema and validator changes without prompt updates
+produce "unknown action" errors — the LLM returns what it knows,
+not what the schema expects.
+**Checklist for adding a new action:**
+  1. ALLOWED_ACTIONS in command_schema.py
+  2. COMMAND_SCHEMAS in command_schema.py
+  3. _validate_<action>() in validator.py
+  4. _execute_<action>() or handler in appropriate module
+  5. SYSTEM_PROMPT in llm_client.py (with example)
+**Status:** Active — applies to all future actions
