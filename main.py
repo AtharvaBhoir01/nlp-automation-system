@@ -46,7 +46,7 @@ def _handle_organize_folder(command: dict, logger) -> None:
 
     # Confirmation
     confirm = input(
-        f"\nType CONFIRM to organize {len(plan.operations)} files,"
+        f"\nType CONFIRM (uppercase) to organize {len(plan.operations)} files,"
         f" or anything else to cancel: "
     ).strip()
 
