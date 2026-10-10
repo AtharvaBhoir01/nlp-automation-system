@@ -1,377 +1,161 @@
 # NLP Automation System
 
-A Natural Language Programming Interface for performing computer file-system
-operations using plain English.
+> **Control your computer with natural language.**  
+> Type plain English — the system figures out the file operation and executes it safely.
 
-The system converts natural-language instructions into structured commands,
-validates them through multiple safety layers, resolves system-specific paths,
-asks for confirmation when required, executes the operation, and records the
-result through centralized logging.
+```
+You: move report.pdf from downloads to documents
+→ Parsing intent...
+→ Resolving paths...
+→ Preview: C:\Users\LENOVO\OneDrive\Downloads\report.pdf
+         → C:\Users\LENOVO\OneDrive\Documents\report.pdf
+Confirm? (yes/no): yes
+✓ Done.
+```
 
 ---
 
-## Project Goal
+## What It Does
 
-The goal is to explore how natural language can be used as an interface for
-computer automation, particularly for users who may not be comfortable with
-command-line tools or scripting.
+| Command | Example |
+|---|---|
+| Move a file | `move report.pdf from downloads to documents` |
+| Rename a file | `rename notes.txt to final_notes.txt on desktop` |
+| Create a folder | `create a folder called Projects in documents` |
+| Organize a folder | `organize my downloads folder` |
 
-Instead of using commands such as:
-
-```text
-move file.pdf C:\Users\User\Documents\
-```
-
-the user can simply provide:
-
-```text
-move file.pdf from desktop to documents
-```
-
-The system interprets the instruction and safely converts it into a structured
-file-system operation.
-
----
-
-## Current Status
-
-### MVP Complete ✅
-
-The core pipeline is fully implemented and tested.
-
-- Natural-language command interpretation
-- Provider-agnostic LLM integration
-- JSON command schema
-- Structural/schema validation
-- Runtime path resolution
-- OneDrive-aware common-location detection
-- Semantic and safety validation
-- User confirmation for destructive operations
-- File execution engine
-- Centralized operational logging
-- Automated schema tests
-
-**Test status: 16/16 tests passing**
+The organize command scans a folder and sorts every file into category subfolders — PDFs, Images, Videos, Code, Archives, Documents, Audio, Other — with a dry-run preview before touching anything.
 
 ---
 
 ## Architecture
 
-```text
-User
- │
- ▼
-main.py
- │
- ▼
-LLM Interpretation
-interpreter/
- │
- ▼
-Schema Validation
-schema/
- │
- ▼
-Path Resolution
-resolver/
- │
- ▼
-Semantic Validation
-validator/
- │
- ▼
-Confirmation
- │
- ▼
-Execution
-executor/
- │
- ▼
-File System
- │
- ▼
-Logging
-logs/
+```
+User Input (plain English)
+        ↓
+  LLM Interpreter           ← Gemini API → structured JSON command
+        ↓
+  Schema Validator          ← checks required fields, allowed actions
+        ↓
+  Path Resolver             ← "downloads" → C:\Users\...\OneDrive\Downloads
+        ↓
+  Semantic Validator        ← source exists? destination safe? no traversal?
+        ↓
+  Confirmation Gate         ← shows exact paths, waits uppercase "CONFIRM" confirmation 
+        ↓
+  Execution Engine          ← shutil.move, os.rename, os.makedirs
+        ↓
+  Logger                    ← appends to logs/commands.log
 ```
 
-Each module has a separate responsibility, following a modular architecture
-and the Single Responsibility Principle.
+Every stage is a separate module. A failure at any stage aborts cleanly with a specific error code — no partial operations, no silent failures.
 
 ---
 
-## Supported Operations
+## Engineering Decisions
 
-### Move File
+**1. Provider-agnostic LLM layer**  
+`LLMClient` is an abstract base class. `GeminiClient` is one implementation. Switching to Claude API or any other LLM requires adding one new class — nothing else changes.
 
-```text
-move test.txt from desktop to documents
-```
+**2. Separate path resolution from validation**  
+`path_resolver.py` is a pure translation layer: "downloads" → real path. `validator.py` is a safety layer: does the path exist, is it dangerous, is it trying a traversal attack? Single Responsibility Principle — each module has one job.
 
-### Rename File
+**3. Structured error codes, not formatted strings**  
+Executors return codes like `SOURCE_NOT_FOUND`, `PERMISSION_DENIED`, `SAME_PATH`. The presentation layer in `main.py` owns all user-facing messages. This means the logic and the display are never coupled.
 
-```text
-rename test.txt to test_renamed.txt on desktop
-```
+**4. Batch operations: LLM describes intent, Python discovers files**  
+For `organize_folder`, the LLM only returns `{"action": "organize_folder", "source": "downloads"}`. Python's `discover_files()` does the actual filesystem scan. The LLM never guesses filenames.
 
-### Create Folder
+**5. Post-confirmation re-validation**  
+After the user confirms a batch plan, `validate_plan()` re-checks every source file before touching anything. If even one file has disappeared since the preview, the entire batch is aborted. The confirmation applies to the exact plan shown — not a best-effort approximation of it.
 
-```text
-create a folder called TestFolder in documents
-```
-
-These operations form the controlled foundation of the MVP. The long-term goal
-is to support more complex natural-language automation tasks.
+See [`DECISIONS.md`](DECISIONS.md) for the full Architecture Decision Record (11 ADRs).
 
 ---
 
-## Safety Pipeline
+## Tech Stack
 
-The LLM does **not** directly execute file-system operations.
-
-Commands pass through multiple layers:
-
-```text
-Natural Language
-      ↓
-LLM Interpretation
-      ↓
-Schema Validation
-      ↓
-Path Resolution
-      ↓
-Semantic & Safety Validation
-      ↓
-User Confirmation
-      ↓
-Execution
-```
-
-### Schema Validation
-
-Checks whether the generated command is structurally valid:
-
-- Supported action
-- Required parameters
-- Correct command structure
-- Valid parameter types
-
-### Path Resolution
-
-Detects the user's actual system paths instead of relying on hardcoded
-usernames or assumed OneDrive configuration.
-
-Common locations such as Desktop and Documents are checked individually so the
-resolver can handle standard Windows and OneDrive-based setups.
-
-### Semantic Validation
-
-Checks conditions such as:
-
-- Source existence
-- Destination validity
-- Dangerous system locations
-- Directory traversal attempts
-- Illegal characters
-- Source/destination conflicts
-- Extension-change warnings
-
-### Confirmation
-
-Destructive operations such as moving and renaming files require explicit
-user confirmation before execution.
+| Layer | Technology |
+|---|---|
+| Language | Python 3.13 |
+| LLM | Google Gemini (`google-genai` SDK) |
+| File ops | `shutil`, `os`, `pathlib` |
+| Hidden file detection | `ctypes.windll.kernel32` (Windows API) |
+| Testing | `unittest`, `unittest.mock`, `tempfile` |
+| Logging | Python `logging` module |
 
 ---
 
-## Provider-Agnostic LLM Architecture
+## Project Structure
 
-The LLM integration is designed around an abstraction layer:
-
-```text
-              LLMClient
-                  │
-        ┌─────────┼─────────┐
-        ▼         ▼         ▼
-   GeminiClient ClaudeClient OpenAIClient
 ```
-
-The core pipeline communicates through the common interface, allowing the LLM
-provider to be changed without modifying the schema, resolver, validator, or
-executor layers.
-
-The current implementation uses Google's Gemini API.
-
----
-
-## Execution Engine
-
-The executor performs the actual file-system operations using Python's
-standard library:
-
-```text
-move_file     → shutil.move()
-rename_file   → os.rename()
-create_folder → os.makedirs()
-```
-
-The executor returns concise status codes rather than user-facing messages,
-keeping execution logic separate from presentation.
-
-Examples:
-
-```text
-MOVE_SUCCESS
-RENAME_SUCCESS
-CREATE_SUCCESS
-PERMISSION_DENIED
-OS_ERROR
-ALREADY_EXISTS
+nlp-automation/
+├── main.py                  # Entry point, CLI loop, orchestration
+├── interpreter/
+│   └── llm_client.py        # Abstract LLMClient + GeminiClient
+├── schema/
+│   └── command_schema.py    # ALLOWED_ACTIONS, COMMAND_SCHEMAS, validate_command_structure()
+├── resolver/
+│   └── path_resolver.py     # Placeholder → real path translation (OneDrive-aware)
+├── validator/
+│   └── validator.py         # Semantic safety checks, structured error codes
+├── executor/
+│   └── executor.py          # File operations, returns status codes only
+├── batch/
+│   └── organizer.py         # discover_files, build_plan, validate_plan, execute_plan
+├── logs/
+│   └── commands.log         # Append-only execution log (gitignored)
+├── tests/
+│   ├── test_schema.py       # 16 tests — schema validation
+│   └── test_organizer.py    # 46 tests — batch pipeline (unit + integration)
+└── DECISIONS.md             # 11 Architecture Decision Records
 ```
 
 ---
 
-## Logging
+## Run Locally
 
-The project uses Python's built-in `logging` module.
-
-Operational events are recorded in:
-
-```text
-logs/commands.log
+```bash
+git clone https://github.com/AtharvaBhoir01/nlp-automation-system.git
+cd nlp-automation-system
+pip install google-genai
 ```
 
-The log records timestamps, log levels, and operation results.
-
-Runtime logs are excluded from Git because they may contain machine-specific
-paths and local system information.
+Set your Gemini API key (Windows):
+```
+setx GEMINI_API_KEY "your-key-here"
+```
+Then open a new terminal and run:
+```bash
+python main.py
+```
 
 ---
 
-## Testing
-
-Automated tests use Python's built-in `unittest` framework.
-
-Run the tests with:
+## Run Tests
 
 ```bash
 python -m unittest tests/test_schema.py -v
+python -m unittest tests/test_organizer.py -v
 ```
 
-Current result:
-
-```text
-16 tests
-16 passed
-0 failures
-```
-
-Tests cover:
-
-- Valid commands
-- Unsupported actions
-- Missing fields
-- Invalid parameter structures
-- Invalid parameter types
-- Empty commands
-- Extra parameters
-- Edge cases
-
-The tests provide regression protection when the system is modified or
-extended.
+62 tests, 0 failures.
 
 ---
 
-## Known Limitation
+## Known Limitations
 
-The system validates whether an operation is technically and semantically safe,
-but it cannot always prove that the interpreted command matches the user's
-exact intention.
-
-For example, if multiple files have the same name:
-
-```text
-Desktop\test.txt
-Desktop\TestFolder\test.txt
-```
-
-and the user says:
-
-```text
-move test.txt to documents
-```
-
-the LLM may select one valid path even though the user intended the other.
-
-The operation could therefore pass every technical validation layer while
-still producing an unintended result.
-
-A future enhancement is a semantic disambiguation layer that can detect
-multiple possible matches and ask the user to select the intended file.
-
----
-
-## Future Direction
-
-The MVP establishes the core natural-language automation engine.
-
-Future development will be driven by **real user problems rather than feature
-count**.
-
-Potential directions include:
-
-- Semantic file disambiguation
-- Natural-language file search
-- Bulk file operations
-- Automated folder organization
-- Multi-step automation plans
-- Additional computer automation capabilities
-- Alternative user interfaces beyond CLI
-- Additional LLM providers
-
-These are planned directions and are **not currently implemented**.
-
-The long-term goal is to evolve from simple file operations into a broader
-natural-language automation engine capable of safely handling complex,
-multi-step computer tasks.
-
----
-
-## Technology Stack
-
-- **Language:** Python 3
-- **LLM:** Google Gemini API
-- **SDK:** `google-genai`
-- **Testing:** `unittest`
-- **Version Control:** Git & GitHub
-- **Interface:** Command Line Interface
-- **Standard Library:** `os`, `shutil`, `json`, `logging`
-
----
-
-## Design Principles
-
-- Separation of concerns
-- Single Responsibility Principle
-- Provider-agnostic architecture
-- Layered validation
-- Defensive programming
-- Explicit confirmation for destructive operations
-- Structured status/error codes
-- Modular and extensible design
-- Automated regression testing
+- **Windows only** — path resolution and hidden-file detection use Windows APIs
+- **Shallow organize** — `organize_folder` scans one level deep, not recursive
+- **No undo** — moves are permanent; no rollback mechanism
+- **LLM latency** — each command takes few seconds for the Gemini round-trip
+- **Free-tier quota** — Gemini free tier has rate limits; heavy use may hit them
 
 ---
 
 ## Status
 
-```text
-MVP: COMPLETE ✅
+MVP complete. All core commands working end-to-end on Windows with OneDrive.  
+62 passing tests across schema validation and batch pipeline.
 
-Core pipeline:       COMPLETE
-Execution engine:    COMPLETE
-Logging:             COMPLETE
-Automated tests:     COMPLETE
-Tests passing:       16/16
-```
-
-The next development milestone will begin with use-case analysis to identify
-the highest-value real-world automation capability to build next.
+> Built as a placement project to demonstrate real system design: safety-first pipeline architecture, separation of concerns, structured error handling, and test-driven development.
