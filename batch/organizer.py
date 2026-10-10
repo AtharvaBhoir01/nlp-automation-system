@@ -20,35 +20,71 @@ from dataclasses import dataclass, field
 
 CATEGORY_MAP = {
     # Documents
-    ".pdf":  "PDFs",
-    ".doc":  "Documents", ".docx": "Documents",
-    ".xls":  "Documents", ".xlsx": "Documents",
-    ".ppt":  "Documents", ".pptx": "Documents",
-    ".txt":  "Documents",
-
+    ".pdf": "PDFs",
+    ".doc": "Documents",
+    ".docx": "Documents",
+    ".xls": "Documents",
+    ".xlsx": "Documents",
+    ".ppt": "Documents",
+    ".pptx": "Documents",
+    ".txt": "Documents",
     # Images
-    ".jpg":  "Images", ".jpeg": "Images",
-    ".png":  "Images", ".gif":  "Images",
-    ".bmp":  "Images", ".webp": "Images",
-    ".svg":  "Images",
-
+    ".jpg": "Images",
+    ".jpeg": "Images",
+    ".png": "Images",
+    ".gif": "Images",
+    ".bmp": "Images",
+    ".webp": "Images",
+    ".svg": "Images",
     # Videos
-    ".mp4":  "Videos", ".mov": "Videos",
-    ".avi":  "Videos", ".mkv": "Videos",
-
+    ".mp4": "Videos",
+    ".mov": "Videos",
+    ".avi": "Videos",
+    ".mkv": "Videos",
     # Audio
-    ".mp3":  "Audio", ".wav": "Audio",
-    ".flac": "Audio", ".aac": "Audio",
-
+    ".mp3": "Audio",
+    ".wav": "Audio",
+    ".flac": "Audio",
+    ".aac": "Audio",
     # Archives
-    ".zip":  "Archives", ".rar": "Archives",
-    ".7z":   "Archives", ".tar": "Archives",
-    ".gz":   "Archives",
-
+    ".zip": "Archives",
+    ".rar": "Archives",
+    ".7z": "Archives",
+    ".tar": "Archives",
+    ".gz": "Archives",
     # Code
-    ".py":   "Code", ".js":  "Code",
-    ".html": "Code", ".css": "Code",
-    ".json": "Code", ".xml": "Code",
+    ".py": "Code",
+    ".pyw": "Code",
+    ".c": "Code",
+    ".h": "Code",
+    ".cpp": "Code",
+    ".hpp": "Code",
+    ".cc": "Code",
+    ".cxx": "Code",
+    ".java": "Code",
+    ".class": "Code",
+    ".js": "Code",
+    ".jsx": "Code",
+    ".ts": "Code",
+    ".tsx": "Code",
+    ".html": "Code",
+    ".css": "Code",
+    ".scss": "Code",
+    ".json": "Code",
+    ".xml": "Code",
+    ".yaml": "Code",
+    ".yml": "Code",
+    ".php": "Code",
+    ".rb": "Code",
+    ".go": "Code",
+    ".rs": "Code",
+    ".swift": "Code",
+    ".kt": "Code",
+    ".sh": "Code",
+    ".bat": "Code",
+    ".ps1": "Code",
+    ".sql": "Code",
+    ".r": "Code",
 }
 
 # Explicit fallback — unknown extensions go here
@@ -59,24 +95,25 @@ FALLBACK_CATEGORY = "Other"
 # DOMAIN MODEL
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class FileOperation:
-    source: str       # full resolved source path
+    source: str  # full resolved source path
     destination: str  # full resolved destination path (duplicate-safe)
-    category: str     # human-readable category e.g. "PDFs"
+    category: str  # human-readable category e.g. "PDFs"
 
 
 @dataclass
 class OperationPlan:
     source_directory: str
-    operations: list = field(default_factory=list)      # list[FileOperation]
-    category_counts: dict = field(default_factory=dict) # {category: count}
+    operations: list = field(default_factory=list)  # list[FileOperation]
+    category_counts: dict = field(default_factory=dict)  # {category: count}
 
 
 @dataclass
 class BatchResult:
     succeeded: list = field(default_factory=list)  # list[FileOperation]
-    failed: list = field(default_factory=list)     # list[tuple[FileOperation, str]]
+    failed: list = field(default_factory=list)  # list[tuple[FileOperation, str]]
 
     @property
     def total(self) -> int:
@@ -90,12 +127,14 @@ class BatchResult:
     def failure_count(self) -> int:
         return len(self.failed)
 
+
 # ---------------------------------------------------------------------------
 # FILE DISCOVERY
 # Discovers eligible files in the source directory.
 # Shallow only — root level files, no recursion.
 # Excludes: subdirectories, hidden files, system files.
 # ---------------------------------------------------------------------------
+
 
 def _is_hidden_or_system(filepath: str) -> bool:
     """
@@ -194,11 +233,13 @@ def discover_files(source_directory: str) -> list:
 
     return eligible
 
+
 # ---------------------------------------------------------------------------
 # PLAN BUILDER
 # Builds a complete OperationPlan from filesystem state.
 # Called after validation — source is confirmed to exist.
 # ---------------------------------------------------------------------------
+
 
 def build_plan(source_directory: str) -> OperationPlan:
     """
@@ -230,18 +271,15 @@ def build_plan(source_directory: str) -> OperationPlan:
 
         # Build the operation
         operation = FileOperation(
-            source=filepath,
-            destination=safe_destination,
-            category=category
+            source=filepath, destination=safe_destination, category=category
         )
         plan.operations.append(operation)
 
         # Update category count
-        plan.category_counts[category] = (
-            plan.category_counts.get(category, 0) + 1
-        )
+        plan.category_counts[category] = plan.category_counts.get(category, 0) + 1
 
     return plan
+
 
 # ---------------------------------------------------------------------------
 # PLAN VALIDATOR
@@ -249,6 +287,7 @@ def build_plan(source_directory: str) -> OperationPlan:
 # Called after CONFIRM, before first file is touched.
 # If ANY operation is stale — abort entirely, nothing is modified.
 # ---------------------------------------------------------------------------
+
 
 def validate_plan(plan: OperationPlan) -> tuple:
     """
@@ -303,10 +342,7 @@ def execute_plan(plan: OperationPlan) -> BatchResult:
 
     # Step 1 — create all needed category folders upfront
     # Collect unique destination folders first
-    needed_folders = set(
-        os.path.dirname(op.destination)
-        for op in plan.operations
-    )
+    needed_folders = set(os.path.dirname(op.destination) for op in plan.operations)
 
     for folder in needed_folders:
         if not os.path.exists(folder):
@@ -338,4 +374,4 @@ def execute_plan(plan: OperationPlan) -> BatchResult:
             print(f" ✗ ({code})")
             result.failed.append((operation, code))
 
-    return result 
+    return result
