@@ -1,0 +1,1004 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset=utf8>
+  <meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <style>
+    :root {
+      color-scheme: light;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px)
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px)
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font: 14px -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #fff;
+      color: #000
+    }
+
+    img {
+      max-width: 100%
+    }
+
+    [hidden]:not([hidden=until-found i]) {
+      display: none !important
+    }
+  </style>
+</head>
+
+<body>
+  <title>NLP Automation System</title>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Sora:wght@600;700&display=swap">
+
+  <style>
+    /*
+  Layout: full-bleed sections stacked vertically, max-width container centered
+  Dark-first: terminal/CLI aesthetic matches the project's identity
+*/
+
+    /* ── tokens ── */
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #21262d;
+      --border: #30363d;
+      --fg: #e6edf3;
+      --fg2: #8b949e;
+      --fg3: #6e7681;
+      --accent: #58a6ff;
+      --accent2: #1f6feb;
+      --green: #3fb950;
+      --amber: #d29922;
+
+      --font-display: 'Sora', 'Inter', sans-serif;
+      --font-body: 'Inter', system-ui, sans-serif;
+      --font-mono: 'IBM Plex Mono', 'Fira Mono', monospace;
+
+      color-scheme: dark;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme="dark"]) {
+        --bg: #ffffff;
+        --bg2: #f6f8fa;
+        --bg3: #eaeef2;
+        --border: #d0d7de;
+        --fg: #1f2328;
+        --fg2: #656d76;
+        --fg3: #9198a1;
+        --accent: #0969da;
+        --accent2: #0550ae;
+        --green: #1a7f37;
+        --amber: #9a6700;
+        color-scheme: light;
+      }
+    }
+
+    :root[data-theme="light"] {
+      --bg: #ffffff;
+      --bg2: #f6f8fa;
+      --bg3: #eaeef2;
+      --border: #d0d7de;
+      --fg: #1f2328;
+      --fg2: #656d76;
+      --fg3: #9198a1;
+      --accent: #0969da;
+      --accent2: #0550ae;
+      --green: #1a7f37;
+      --amber: #9a6700;
+      color-scheme: light;
+    }
+
+    /* ── reset & base ── */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding-inline: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    /* ── container ── */
+    .container {
+      max-width: 860px;
+      margin-inline: auto;
+      padding-inline: 24px;
+    }
+
+    /* ── nav ── */
+    nav {
+      position: sticky;
+      top: env(safe-area-inset-top, 0px);
+      z-index: 100;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 860px;
+      margin-inline: auto;
+      padding-inline: 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fg);
+      text-decoration: none;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-logo span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav-links a {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fg2);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .nav-links a:hover {
+      color: var(--fg);
+    }
+
+    /* ── hero ── */
+    .hero {
+      padding-block: 80px 64px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+
+    .hero-headline {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 6vw, 52px);
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+      margin: 0 0 20px;
+      color: var(--fg);
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--fg2);
+      max-width: 560px;
+      margin: 0 0 36px;
+      line-height: 1.65;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.15s, transform 0.1s;
+      cursor: pointer;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.88;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--fg);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--fg3);
+      background: var(--bg2);
+    }
+
+    /* ── terminal demo ── */
+    .terminal-wrap {
+      margin-top: 48px;
+    }
+
+    .terminal {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .terminal-bar {
+      background: var(--bg3);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-red {
+      background: #ff5f56;
+    }
+
+    .dot-yellow {
+      background: #ffbd2e;
+    }
+
+    .dot-green {
+      background: #27c93f;
+    }
+
+    .terminal-title {
+      font-size: 12px;
+      color: var(--fg3);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .terminal-body {
+      padding: 20px 24px;
+      line-height: 1.8;
+      overflow-x: auto;
+    }
+
+    .t-prompt {
+      color: var(--fg3);
+    }
+
+    .t-input {
+      color: var(--fg);
+    }
+
+    .t-system {
+      color: var(--fg2);
+    }
+
+    .t-path {
+      color: var(--accent);
+    }
+
+    .t-ok {
+      color: var(--green);
+    }
+
+    .t-warn {
+      color: var(--amber);
+    }
+
+    .t-label {
+      color: var(--fg3);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── section ── */
+    section {
+      padding-block: 72px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    section:last-of-type {
+      border-bottom: none;
+    }
+
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      text-wrap: balance;
+      margin: 0 0 16px;
+      color: var(--fg);
+    }
+
+    .section-lead {
+      font-size: 16px;
+      color: var(--fg2);
+      max-width: 580px;
+      margin-bottom: 48px;
+    }
+
+    /* ── pipeline ── */
+    .pipeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .pipeline-step {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 0 20px;
+      position: relative;
+    }
+
+    .pipeline-spine {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pipe-node {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .pipe-line {
+      width: 2px;
+      flex: 1;
+      min-height: 32px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+
+    .pipeline-step:last-child .pipe-line {
+      display: none;
+    }
+
+    .pipe-content {
+      padding-bottom: 32px;
+      padding-top: 8px;
+    }
+
+    .pipe-name {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fg);
+      margin-bottom: 4px;
+    }
+
+    .pipe-desc {
+      font-size: 14px;
+      color: var(--fg2);
+      line-height: 1.6;
+    }
+
+    .pipe-tag {
+      display: inline-block;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--bg3);
+      color: var(--fg3);
+      border: 1px solid var(--border);
+    }
+
+    /* ── decisions ── */
+    .decisions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .decision-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      transition: border-color 0.15s;
+    }
+
+    .decision-card:hover {
+      border-color: var(--fg3);
+    }
+
+    .dc-number {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--fg3);
+      margin-bottom: 8px;
+    }
+
+    .dc-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--fg);
+      margin-bottom: 6px;
+      text-wrap: balance;
+    }
+
+    .dc-desc {
+      font-size: 13px;
+      color: var(--fg2);
+      line-height: 1.55;
+    }
+
+    /* ── demo ── */
+    .video-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-placeholder {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .video-placeholder svg {
+      opacity: 0.3;
+      margin-bottom: 16px;
+    }
+
+    .video-placeholder p {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--fg3);
+      margin: 0;
+    }
+
+    /* ── tech stack ── */
+    .stack-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .stack-chip {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 6px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      color: var(--fg);
+    }
+
+    /* ── stats row ── */
+    .stats-row {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    .stat {}
+
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: 36px;
+      font-weight: 700;
+      color: var(--fg);
+      letter-spacing: -0.03em;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--fg3);
+    }
+
+    /* ── commands table ── */
+    .commands {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .cmd-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      align-items: start;
+    }
+
+    .cmd-row:last-child {
+      border-bottom: none;
+    }
+
+    .cmd-row:first-child {
+      background: var(--bg3);
+    }
+
+    .cmd-cell {
+      padding: 12px 16px;
+      font-size: 13px;
+    }
+
+    .cmd-row:first-child .cmd-cell {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--fg3);
+    }
+
+    .cmd-nl {
+      font-size: 13px;
+      color: var(--fg);
+    }
+
+    .cmd-action {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    .cmd-cell+.cmd-cell {
+      border-left: 1px solid var(--border);
+    }
+
+    /* ── footer ── */
+    footer {
+      padding-block: 40px;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-left {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--fg3);
+    }
+
+    .footer-left a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .footer-left a:hover {
+      text-decoration: underline;
+    }
+
+    .footer-right {
+      font-size: 13px;
+      color: var(--fg3);
+    }
+
+    /* ── responsive ── */
+    @media (max-width: 600px) {
+      .nav-links {
+        display: none;
+      }
+
+      .hero {
+        padding-block: 48px 40px;
+      }
+
+      .cmd-row {
+        grid-template-columns: 1fr;
+      }
+
+      .cmd-cell+.cmd-cell {
+        border-left: none;
+        border-top: 1px solid var(--border);
+      }
+
+      .stats-row {
+        gap: 24px;
+      }
+
+      .decisions-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-logo" href="#"><span>&gt;_</span> nlp-automation</a>
+      <ul class="nav-links">
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#decisions">Decisions</a></li>
+        <li><a href="#demo">Demo</a></li>
+        <li><a href="https://github.com/AtharvaBhoir01/nlp-automation-system" target="_blank" rel="noopener">GitHub
+            ↗</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <p class="hero-eyebrow">Python · Gemini API · CLI</p>
+      <h1 class="hero-headline">Control your computer<br>with plain English.</h1>
+      <p class="hero-sub">Type a file command the way you'd say it. The system interprets it, shows you exactly what
+        will happen, and executes it safely — no scripts, no terminal syntax.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://github.com/AtharvaBhoir01/nlp-automation-system" target="_blank"
+          rel="noopener">View on GitHub</a>
+        <a class="btn btn-ghost" href="#demo">Watch demo</a>
+      </div>
+
+      <div class="terminal-wrap">
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="dot dot-red"></div>
+            <div class="dot dot-yellow"></div>
+            <div class="dot dot-green"></div>
+            <span class="terminal-title">nlp-automation — cmd.exe</span>
+          </div>
+          <div class="terminal-body">
+            <div><span class="t-prompt">You: </span><span class="t-input">organize my downloads folder</span></div>
+            <div class="t-system">→ Parsing intent…</div>
+            <div class="t-system">→ Discovering files…</div>
+            <br>
+            <div><span class="t-label">Preview — 9 files</span></div>
+            <div><span class="t-path">report_q3.pdf</span> <span class="t-system">→ PDFs/</span></div>
+            <div><span class="t-path">photo_trip.jpg</span> <span class="t-system">→ Images/</span></div>
+            <div><span class="t-path">budget_2024.xlsx</span> <span class="t-system">→ Documents/</span></div>
+            <div><span class="t-path">main.py</span> <span class="t-system">→ Code/</span></div>
+            <div><span class="t-path">lecture.mp4</span> <span class="t-system">→ Videos/</span></div>
+            <div class="t-system">… and 4 more files</div>
+            <br>
+            <div><span class="t-warn">Type CONFIRM (uppercase) to organize 9 files, or anything else to cancel:
+              </span><span class="t-input">CONFIRM</span></div>
+            <br>
+            <div><span class="t-ok"> Moving 'report_q3.pdf' → PDFs/ ✓</span></div>
+            <div><span class="t-ok"> Moving 'photo_trip.jpg' → Images/ ✓</span></div>
+            <div><span class="t-ok"> Moving 'budget_2024.xlsx' → Documents/ ✓</span></div>
+            <div><span class="t-ok"> Moving 'main.py' → Code/ ✓</span></div>
+            <div><span class="t-ok"> Moving 'lecture.mp4' → Videos/ ✓</span></div>
+            <div class="t-system">… 4 more moved</div>
+            <br>
+            <div><span class="t-ok">✓ Done. 9 files organized.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMANDS -->
+  <section>
+    <div class="container">
+      <p class="section-eyebrow">What it does</p>
+      <h2 class="section-title">Four commands, zero syntax.</h2>
+      <p class="section-lead">Say it naturally — the system figures out what you mean.</p>
+
+      <div class="commands">
+        <div class="cmd-row">
+          <div class="cmd-cell">Natural language</div>
+          <div class="cmd-cell">Action</div>
+        </div>
+        <div class="cmd-row">
+          <div class="cmd-cell"><span class="cmd-nl">"move report.pdf from downloads to documents"</span></div>
+          <div class="cmd-cell"><span class="cmd-action">move_file</span></div>
+        </div>
+        <div class="cmd-row">
+          <div class="cmd-cell"><span class="cmd-nl">"rename notes.txt to final_notes.txt on desktop"</span></div>
+          <div class="cmd-cell"><span class="cmd-action">rename_file</span></div>
+        </div>
+        <div class="cmd-row">
+          <div class="cmd-cell"><span class="cmd-nl">"create a folder called Projects in documents"</span></div>
+          <div class="cmd-cell"><span class="cmd-action">create_folder</span></div>
+        </div>
+        <div class="cmd-row">
+          <div class="cmd-cell"><span class="cmd-nl">"organize my downloads folder"</span></div>
+          <div class="cmd-cell"><span class="cmd-action">organize_folder</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works">
+    <div class="container">
+      <p class="section-eyebrow">How it works</p>
+      <h2 class="section-title">A safety-first pipeline.</h2>
+      <p class="section-lead">Every command passes through six stages before a single file moves. Each stage has one
+        job.</p>
+
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <div class="pipeline-spine">
+            <div class="pipe-node">1</div>
+            <div class="pipe-line"></div>
+          </div>
+          <div class="pipe-content">
+            <div class="pipe-name">LLM Interpreter</div>
+            <div class="pipe-desc">Plain English → structured JSON command. Gemini is called with a few-shot prompt and
+              forced JSON output mode. The response is never trusted as code — only as data.</div>
+            <span class="pipe-tag">interpreter/llm_client.py</span>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-spine">
+            <div class="pipe-node">2</div>
+            <div class="pipe-line"></div>
+          </div>
+          <div class="pipe-content">
+            <div class="pipe-name">Schema Validator</div>
+            <div class="pipe-desc">Checks the JSON structure against a strict schema contract — allowed actions,
+              required fields. Rejects anything malformed before it reaches the filesystem.</div>
+            <span class="pipe-tag">schema/command_schema.py</span>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-spine">
+            <div class="pipe-node">3</div>
+            <div class="pipe-line"></div>
+          </div>
+          <div class="pipe-content">
+            <div class="pipe-name">Path Resolver</div>
+            <div class="pipe-desc">Translates "downloads" and "desktop" into real Windows paths. OneDrive-aware: checks
+              per-folder existence rather than assuming a single directory layout.</div>
+            <span class="pipe-tag">resolver/path_resolver.py</span>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-spine">
+            <div class="pipe-node">4</div>
+            <div class="pipe-line"></div>
+          </div>
+          <div class="pipe-content">
+            <div class="pipe-name">Semantic Validator</div>
+            <div class="pipe-desc">Does the source file exist? Is the destination safe? Could this be a path traversal?
+              Returns structured error codes, not formatted strings — the presentation layer owns the messages.</div>
+            <span class="pipe-tag">validator/validator.py</span>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-spine">
+            <div class="pipe-node">5</div>
+            <div class="pipe-line"></div>
+          </div>
+          <div class="pipe-content">
+            <div class="pipe-name">Confirmation Gate</div>
+            <div class="pipe-desc">Shows the exact resolved paths before touching anything. For batch operations,
+              re-validates after confirmation — if even one file disappeared, the entire batch is aborted.</div>
+            <span class="pipe-tag">main.py</span>
+          </div>
+        </div>
+        <div class="pipeline-step">
+          <div class="pipeline-spine">
+            <div class="pipe-node">6</div>
+            <div class="pipe-line"></div>
+          </div>
+          <div class="pipe-content">
+            <div class="pipe-name">Execution Engine</div>
+            <div class="pipe-desc">Performs the filesystem operation using shutil and os. Returns status codes only.
+              Every operation is logged with a timestamp.</div>
+            <span class="pipe-tag">executor/executor.py</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DECISIONS -->
+  <section id="decisions">
+    <div class="container">
+      <p class="section-eyebrow">Engineering decisions</p>
+      <h2 class="section-title">Designed, not just built.</h2>
+      <p class="section-lead">Key architectural choices and the reasoning behind them — documented in the repo as
+        Architecture Decision Records.</p>
+
+      <div class="decisions-grid">
+        <div class="decision-card">
+          <div class="dc-number">ADR-001</div>
+          <div class="dc-title">Provider-agnostic LLM layer</div>
+          <div class="dc-desc">Abstract base class with NotImplementedError. Switching from Gemini to Claude API or any
+            other LLM means adding one class — nothing else changes.</div>
+        </div>
+        <div class="decision-card">
+          <div class="dc-number">ADR-002</div>
+          <div class="dc-title">Separate path resolution from validation</div>
+          <div class="dc-desc">Path resolver is a pure translation layer. Validator is a safety layer. Single
+            Responsibility Principle: each module does one job.</div>
+        </div>
+        <div class="decision-card">
+          <div class="dc-number">ADR-003</div>
+          <div class="dc-title">Structured error codes</div>
+          <div class="dc-desc">Executors return SOURCE_NOT_FOUND, PERMISSION_DENIED, SAME_PATH. The presentation layer
+            owns all user-facing messages. Logic and display are never coupled.</div>
+        </div>
+        <div class="decision-card">
+          <div class="dc-number">ADR-004</div>
+          <div class="dc-title">LLM describes intent, Python discovers files</div>
+          <div class="dc-desc">For organize_folder, the LLM returns only the source path. Python's discover_files() does
+            the actual filesystem scan. The LLM never guesses filenames.</div>
+        </div>
+        <div class="decision-card">
+          <div class="dc-number">ADR-005</div>
+          <div class="dc-title">Post-confirmation re-validation</div>
+          <div class="dc-desc">After the user confirms, validate_plan() re-checks every source file. One stale file
+            aborts the entire batch. Confirmation applies to the exact plan shown.</div>
+        </div>
+        <div class="decision-card">
+          <div class="dc-number">ADR-011</div>
+          <div class="dc-title">System prompt as architecture</div>
+          <div class="dc-desc">The SYSTEM_PROMPT is a checklist: adding a new action requires updating the prompt before
+            updating any other file. Documented as an architectural invariant.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <section id="demo">
+    <div class="container">
+      <p class="section-eyebrow">Demo</p>
+      <h2 class="section-title">See it run.</h2>
+      <p class="section-lead">End-to-end walkthrough: four commands including a full folder organization with preview
+        and confirmation.</p>
+
+      <div class="video-container" style="display:block">
+        <iframe width="100%" height="100%" src="https://www.youtube.com/embed/o2CKtGFobOA" frameborder="0"
+          allowfullscreen style="border-radius:10px">
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH + STATS -->
+  <section>
+    <div class="container">
+      <p class="section-eyebrow">By the numbers</p>
+      <h2 class="section-title">Built from scratch.</h2>
+
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-number">62</div>
+          <div class="stat-label">passing tests</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">11</div>
+          <div class="stat-label">ADRs documented</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">6</div>
+          <div class="stat-label">pipeline stages</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">4</div>
+          <div class="stat-label">actions supported</div>
+        </div>
+      </div>
+
+      <div class="stack-list">
+        <span class="stack-chip">Python 3.13</span>
+        <span class="stack-chip">Google Gemini</span>
+        <span class="stack-chip">google-genai SDK</span>
+        <span class="stack-chip">shutil / os</span>
+        <span class="stack-chip">ctypes (Windows API)</span>
+        <span class="stack-chip">unittest</span>
+        <span class="stack-chip">unittest.mock</span>
+        <span class="stack-chip">tempfile</span>
+        <span class="stack-chip">logging</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-left">
+          Built by Atharva Bhoir ·
+          <a href="https://github.com/AtharvaBhoir01/nlp-automation-system" target="_blank"
+            rel="noopener">github.com/AtharvaBhoir01/nlp-automation-system</a>
+        </div>
+        <div class="footer-right">Computer Engineering · 2026</div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>
